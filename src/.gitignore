@@ -1,0 +1,7 @@
+*.exe
+*.app
+*.o
+*.dev
+Makefile.win
+traffic-system
+traffic-system.layout
