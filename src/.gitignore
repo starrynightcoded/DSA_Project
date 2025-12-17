@@ -1,0 +1,5 @@
+*.exe
+*.o
+*.app
+Makefile.win
+*.dev
