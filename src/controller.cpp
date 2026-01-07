@@ -16,9 +16,10 @@ void AdaptiveController::generateRandomCars() {
         for (auto& pair : inter->getAllLanes()) {
             Lane* lane = pair.second;
             if (lane->isSourceLane) {
-                int numCars = rand() % 3 + 1; // 1-3 cars
+                int numCars = rand() % 4 + 1; // 1-5 cars
                 for (int i = 0; i < numCars; ++i) {
                     Car* c = new Car(nextCarId++);
+                    totalCarsGenerated++;
                     lane->addCar(c);
                     std::cout << "Generated Car " << c->getId() 
                               << " in lane " << lane->getName() 
@@ -44,9 +45,10 @@ void AdaptiveController::forwardCars() {
                     std::string nextLaneName = next.second;
 
                     Car* car = lane->removeCar();
-
+				
                     if (nextInter != nullptr) {
                         nextInter->addCarToLane(nextLaneName, car);
+                        carsForwardToConnectedLane++;
                         std::cout << "Car " << car->getId()
                                   << " moved from lane " << lane->getName() 
                                   << " of Intersection " << interLabel
@@ -57,10 +59,12 @@ void AdaptiveController::forwardCars() {
                                   << " left the network from lane " << lane->getName()
                                   << " of Intersection " << interLabel << "\n";
                         delete car;
+                       
                     }
                 } else {
                 
                     Car* car = lane->removeCar();
+                    
                     std::cout << "Car " << car->getId()
                               << " left the network from lane " << lane->getName()
                               << " of Intersection " << interLabel << "\n";
@@ -84,16 +88,24 @@ void AdaptiveController::allocateGreenLights() {
                          inter->getLane("W")->getLaneLength() + inter->getLane("W")->waitingTime;
 
         std::string green1, green2;
+         int chosenPriority;
         if (nsPriority >= ewPriority) {
             green1 = "N";
             green2 = "S";
+            chosenPriority = nsPriority;
         } else {
             green1 = "E";
             green2 = "W";
+            chosenPriority = ewPriority;
         }
 
-        int greenTime = baseGreenTime + rand() % (maxGreenTime - baseGreenTime + 1);
-
+        //int greenTime = baseGreenTime + rand() % (maxGreenTime - baseGreenTime + 1);
+		
+		int scalingFactor = 3;
+        int greenTime = baseGreenTime + (chosenPriority / scalingFactor);
+        if (greenTime > maxGreenTime)
+            greenTime = maxGreenTime;
+		
         inter->getLane(green1)->setState("GREEN");
         inter->getLane(green2)->setState("GREEN");
 
@@ -101,7 +113,11 @@ void AdaptiveController::allocateGreenLights() {
             Lane* lane = pair.second;
             if (lane->getName() != green1 && lane->getName() != green2) {
                 lane->setState("RED");
-                if (!lane->isEmpty()) lane->waitingTime++;
+                if (!lane->isEmpty()){
+                	lane->waitingTime++;
+                	totalWaitingTime += lane->waitingTime;
+					maxWaitingTime = std::max(maxWaitingTime, lane->waitingTime);
+				} 
             }
         }
 
@@ -119,7 +135,7 @@ void AdaptiveController::allocateGreenLights() {
 
 void AdaptiveController::simulateStep() {
     currentTime++;
-    std::cout << "\n=== Simulation Step " << currentTime << " ===\n";
+    std::cout << "\n--- Simulation Step " << currentTime << " ---\n";
 
     generateRandomCars();
     allocateGreenLights();
@@ -140,3 +156,34 @@ void AdaptiveController::simulateStep() {
         interLabel++;
     }
 }
+
+void AdaptiveController::displayMetrics() {
+    int carsInSystem = 0;
+    int totalLanes = 0;
+
+    for (auto* inter : intersections) {
+        for (auto& pair : inter->getAllLanes()) {
+            Lane* lane = pair.second;
+            carsInSystem += lane->getLaneLength();
+            totalLanes++;
+            carsExited += lane->totalCarsExited;
+        }
+    }
+	carsExited = carsExited - carsForwardToConnectedLane;
+    double avgWaitingTime = (carsExited> 0)
+        ? (double)totalWaitingTime / carsExited
+        : 0.0;
+	std::cout << "\n-----------------------------------------\n";
+    std::cout << "\n---------- SIMULATION METRICS ----------\n";
+    std::cout << "Total Simulation Steps: " << currentTime << "\n";
+    std::cout << "Total Cars Generated: " << totalCarsGenerated << "\n";
+    std::cout << "Total Cars Exited: " << carsExited << "\n";
+    std::cout << "Cars Still in Network: " << carsInSystem << "\n";
+    //std::cout<< "Cars forwarded to connected lanes: "<<carsForwardToConnectedLane<<" \n";
+    std::cout << "Average Waiting Time: " << avgWaitingTime << " Units\n";
+    std::cout << "Maximum Waiting Time Observed: " << maxWaitingTime << " Units\n";
+//    std::cout << "Average Cars per Lane: "
+//              << (double)carsInSystem / totalLanes << "\n";
+    std::cout << "----------------------------------------\n";
+}
+
