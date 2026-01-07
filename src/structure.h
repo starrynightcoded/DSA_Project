@@ -22,7 +22,7 @@ class Lane{
 		std::string state; //red or green
 		bool isSourceLane;
 		NodeBasedQueue<Car*> lane; //will fill vehicles in it
-
+		int totalCarsExited = 0;
 		Lane(int id, std::string n);
 	    void addCar(Car* car);
 	    Car* removeCar();
@@ -47,7 +47,7 @@ class Intersection{
 	public:
 		int intersectionId;
 	
-		std::unordered_map<std::string, Lane*> Lanes;
+		std::unordered_map<std::string, Lane*> Lanes; // <"A", lane(N S E W)>
 		Intersection();
 		~Intersection();
 		void processGreen(const std::string& lane1,
@@ -57,7 +57,7 @@ class Intersection{
 		Lane* getLane(const std::string& name);
 		std::unordered_map<std::string, Lane*>& getAllLanes();
 		bool addCarToLane(const std::string &name, Car* car);
-		 std::unordered_map<std::string, std::pair<Intersection*, std::string>> outgoing;
+		std::unordered_map<std::string, std::pair<Intersection*, std::string>> outgoing; 
 };
 
 #endif
