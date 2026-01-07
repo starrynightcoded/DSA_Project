@@ -32,11 +32,17 @@ private:
 
 public:
     AdaptiveController(std::vector<Intersection*> inters, int baseTime, int maxTime);
-
+	
     void generateRandomCars();
     void forwardCars();
     void allocateGreenLights();
     void simulateStep();
+    int totalCarsGenerated = 0;
+	int carsExited = 0;
+	int totalWaitingTime = 0;
+	int maxWaitingTime = 0;
+	int carsForwardToConnectedLane = 0;
+	void displayMetrics();
 };
 
 #endif
