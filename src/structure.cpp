@@ -14,6 +14,7 @@ Car* Lane::removeCar(){
 	if(cars.isEmpty()){
 		return NULL;
 	}
+	totalCarsExited++;
 	return cars.dequeue();
 }
 Car* Lane::peekCar() const{
